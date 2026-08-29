@@ -22,7 +22,7 @@
 
 namespace utilityCore
 {
-    extern unsigned int divup(unsigned int size, unsigned int div);
+    extern int divup(int size, int div);
     extern float clamp(float f, float min, float max);
     extern bool replaceString(std::string& str, const std::string& from, const std::string& to);
     extern glm::vec3 clampRGB(glm::vec3 color);

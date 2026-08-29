@@ -224,8 +224,8 @@ __global__ void kernCopyVelocitiesToVBO(int N, glm::vec3 *vel, float *vbo, float
 void Boids::copyBoidsToVBO(float *vbodptr_positions, float *vbodptr_velocities) {
   dim3 fullBlocksPerGrid(utilityCore::divup(numObjects, blockSize));
 
-  kernCopyPositionsToVBO << <fullBlocksPerGrid, blockSize >> >(numObjects, dev_pos, vbodptr_positions, scene_scale);
-  kernCopyVelocitiesToVBO << <fullBlocksPerGrid, blockSize >> >(numObjects, dev_vel1, vbodptr_velocities, scene_scale);
+  kernCopyPositionsToVBO<<<fullBlocksPerGrid, blockSize>>>(numObjects, dev_pos, vbodptr_positions, scene_scale);
+  kernCopyVelocitiesToVBO<<<fullBlocksPerGrid, blockSize>>>(numObjects, dev_vel1, vbodptr_velocities, scene_scale);
 
   checkCUDAErrorWithLine("copyBoidsToVBO failed!");
 
@@ -284,9 +284,17 @@ __device__ glm::vec3 computeVelocityChange(int N, int iSelf, const glm::vec3 *po
         }
     }
 
-    return (((perceivedCenter / rule1Neighbors) - pos[iSelf]) * rule1Scale)
+    glm::vec3 rule1Vel = rule1Neighbors
+        ? (((perceivedCenter / rule1Neighbors) - pos[iSelf]) * rule1Scale)
+        : glm::vec3(0.0f, 0.0f, 0.0f);
+
+    glm::vec3 rule3Vel = rule3Neighbors
+        ? ((perceivedVelocity / rule3Neighbors) * rule3Scale)
+        : glm::vec3(0.0f, 0.0f, 0.0f);
+
+    return rule1Vel
         + ((avoidVel) * rule2Scale)
-        + ((perceivedVelocity / rule3Neighbors) * rule3Scale);
+        + rule3Vel;
 }
 
 /**

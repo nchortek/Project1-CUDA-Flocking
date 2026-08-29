@@ -16,7 +16,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
-unsigned int utilityCore::divup(unsigned int size, unsigned int div)
+int utilityCore::divup(int size, int div)
 {
     return (size + div - 1) / div;
 }
