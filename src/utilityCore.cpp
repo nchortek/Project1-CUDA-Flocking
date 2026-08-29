@@ -16,6 +16,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
+unsigned int utilityCore::divup(unsigned int size, unsigned int div)
+{
+    return (size + div - 1) / div;
+}
+
 float utilityCore::clamp(float f, float min, float max) {
     if (f < min) {
         return min;
