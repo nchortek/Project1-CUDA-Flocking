@@ -256,7 +256,7 @@ void initShaders(GLuint * program) {
       glUseProgram(program[PROG_BOID]);
       glBindVertexArray(boidVAO);
       glPointSize((GLfloat)pointSize);
-      glDrawElements(GL_POINTS, N_FOR_VIS + 1, GL_UNSIGNED_INT, 0);
+      glDrawElements(GL_POINTS, N_FOR_VIS, GL_UNSIGNED_INT, 0);
       glPointSize(1.0f);
 
       glUseProgram(0);
