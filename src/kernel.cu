@@ -80,7 +80,6 @@ dim3 threadsPerBlock(blockSize);
 glm::vec3 *dev_pos;
 glm::vec3 *dev_posSorted;
 glm::vec3 *dev_vel1;
-glm::vec3 *dev_vel1Sorted;
 glm::vec3 *dev_vel2;
 
 // LOOK-2.1 - these are NOT allocated for you. You'll have to set up the thrust
@@ -166,11 +165,6 @@ void Boids::initSimulation(int N) {
   checkCUDAErrorWithLine("cudaMalloc dev_vel1 failed!");
   cudaMemset(dev_vel1, 0, N * sizeof(glm::vec3));
   checkCUDAErrorWithLine("cudaMemset dev_vel1 failed!");
-
-  cudaMalloc((void**)&dev_vel1Sorted, N * sizeof(glm::vec3));
-  checkCUDAErrorWithLine("cudaMalloc dev_vel1Sorted failed!");
-  cudaMemset(dev_vel1Sorted, 0, N * sizeof(glm::vec3));
-  checkCUDAErrorWithLine("cudaMemset dev_vel1Sorted failed!");
 
   cudaMalloc((void**)&dev_vel2, N * sizeof(glm::vec3));
   checkCUDAErrorWithLine("cudaMalloc dev_vel2 failed!");
@@ -489,7 +483,6 @@ __global__ void kernUpdateVelNeighborSearchScattered(
     int minZCellIdx = floor((minSearchPosZ - gridMin.z) * inverseCellWidth);
     int maxZCellIdx = floor((maxSearchPosZ - gridMin.z) * inverseCellWidth);
 
-    // TODO: clamp all cell indices to [0, gridResolution - 1]
     int maxCellSideIdx = gridResolution - 1;
     minXCellIdx = imax(imin(minXCellIdx, maxCellSideIdx), 0);
     maxXCellIdx = imax(imin(maxXCellIdx, maxCellSideIdx), 0);
@@ -869,7 +862,7 @@ void Boids::stepSimulationCoherentGrid(float dt)
         dev_pos,
         dev_posSorted,
         dev_vel1,
-        dev_vel1Sorted);
+        dev_vel2);
 
     // Step 4: Use kernUpdateVelNeighborSearchCoherent to compute the new velocity of each boid in a
     // given gridCell. A -1 value in dev_gridCellStartIndices / dev_gridCellEndIndices indicates an empty cell.
@@ -884,18 +877,14 @@ void Boids::stepSimulationCoherentGrid(float dt)
         dev_gridCellStartIndices,
         dev_gridCellEndIndices,
         dev_posSorted,
-        dev_vel1Sorted,
-        dev_vel2);
+        dev_vel2,
+        dev_vel1);
 
     // Step 5: Use kernUpdatePos to update all boid positions. Spawn blocks covering numObjects threads.
-    kernUpdatePos<<<boidsFullBlocksPerGrid, blockSize>>>(numObjects, dt, dev_posSorted, dev_vel2);
+    kernUpdatePos<<<boidsFullBlocksPerGrid, blockSize>>>(numObjects, dt, dev_posSorted, dev_vel1);
 
     // Step 6: Ping-pong device buffers
-    glm::vec3* temp = dev_vel1;
-    dev_vel1 = dev_vel2;
-    dev_vel2 = temp;
-
-    temp = dev_pos;
+    glm::vec3 *temp = dev_pos;
     dev_pos = dev_posSorted;
     dev_posSorted = temp;
 }
@@ -903,7 +892,6 @@ void Boids::stepSimulationCoherentGrid(float dt)
 void Boids::endSimulation()
 {
     cudaFree(dev_vel1);
-    cudaFree(dev_vel1Sorted);
     cudaFree(dev_vel2);
     cudaFree(dev_pos);
     cudaFree(dev_posSorted);
