@@ -28,7 +28,7 @@
 #define MEASURE_FPS 0
 
 // LOOK-1.2 - change this to adjust particle count in the simulation
-const int N_FOR_VIS = 1000000;
+const int N_FOR_VIS = 100000;
 const float DT = 0.2f;
 
 /**
@@ -238,11 +238,11 @@ void mainLoop() {
     double timebase = startTime;
     double measureStart = notMeasuring;
 
-#if MEASURE_FPS
+    #if MEASURE_FPS
     while (!glfwWindowShouldClose(window) && measuredFrames < targetFrames)
-#else
+    #else
     while (!glfwWindowShouldClose(window))
-#endif
+    #endif
     {
         glfwPollEvents();
         framesSinceLastMeasurement++;
